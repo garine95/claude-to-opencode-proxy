@@ -1,0 +1,8 @@
+.DS_Store
+.claude/
+.idea/
+.env
+.reasoning_proxy.pid
+__pycache__/
+certs/
+proxy.log

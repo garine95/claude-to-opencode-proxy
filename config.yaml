@@ -1,0 +1,80 @@
+server:
+  host: 127.0.0.1
+  port: 4000
+  timeout: 300          # 上游请求超时（秒）
+  retry_on_5xx: true    # 上游 5xx 自动重试
+  max_retries: 1        # 最大重试次数
+  retry_delay: 1.0      # 重试间隔（秒）
+
+# ==================== 自动路由 ====================
+# 开启后，忽略 Claude Code 发来的 model 名，根据请求复杂度自动选模型
+# 关闭时，走常规 routes / default_route 逻辑
+auto_routing:
+  enabled: false
+  # 复杂度 → 模型映射（对应 routes 中的 key）
+  tiers:
+    simple: minimax-m2.7     # 简单任务：快、便宜
+    medium: kimi-k2.5        # 中等任务：均衡
+    complex: glm-5.1      # 复杂任务：最强（可换 glm-5.1）
+  # 评分阈值（分数越高越复杂）
+  # 核心逻辑：纯对话轮次缓慢涨分，工具调用快速涨分
+  thresholds:
+    medium: 60               # >= 20 分走 medium（约 10 轮纯对话 或 2 次工具调用）
+    complex: 120             # >= 60 分走 complex（多轮 + 多工具调用）
+  # 各维度权重（总分 = 各项得分之和）
+  # 注意：Claude Code 每次请求都带巨大 system prompt、大量 tool 定义、长上下文
+  # 这些是固定开销，不反映任务复杂度，所以权重设为 0
+  weights:
+    msg_rounds: 2            # 每轮对话 +2 分（辅助信号，涨分慢）
+    tool_count: 0            # tool 定义数（Claude Code 固定带 10+，设 0 忽略）
+    tool_result_count: 10    # 每个 tool_result +10 分（核心信号：有工具调用才是真正复杂任务）
+    system_length_per_500: 0 # system prompt 长度（Claude Code 固定开销，设 0）
+    total_chars_per_2000: 0  # 消息总字符（Claude Code 把巨量上下文塞进消息体，设 0）
+    has_image: 15            # 包含图片 +15 分
+
+# ==================== Providers ====================
+# api_format: openai (默认) = /chat/completions 格式
+#             anthropic       = /messages 格式（直接透传，不做协议转换）
+providers:
+  kimi:
+    api_base: https://opencode.ai/zen/go/v1/chat/completions
+    api_key_env: OPENCODE_API_KEY
+    api_format: openai
+  minimax:
+    api_base: https://opencode.ai/zen/go/v1/messages
+    api_key_env: OPENCODE_API_KEY
+    api_format: anthropic
+  glm:
+    api_base: https://opencode.ai/zen/go/v1/chat/completions
+    api_key_env: OPENCODE_API_KEY
+    api_format: openai
+  # openai:
+  #   api_base: https://api.openai.com/v1/chat/completions
+  #   api_key: sk-xxx
+  #   api_format: openai
+
+# ==================== 模型路由 ====================
+# Claude Code 发什么 model → 转发到哪个 provider 的什么 model
+routes:
+  kimi-k2.5:
+    provider: kimi
+    upstream_model: kimi-k2.5
+    supports_reasoning: true
+  minimax-m2.7:
+    provider: minimax
+    upstream_model: minimax-m2.7
+    supports_reasoning: false
+  glm-5.1:
+    provider: glm
+    upstream_model: glm-5.1
+    supports_reasoning: false
+  # gpt-4o:
+  #   provider: openai
+  #   upstream_model: gpt-4o
+  #   supports_reasoning: false
+
+# 默认路由（auto_routing 关闭 + 未匹配 route 时的兜底）
+default_route:
+  provider: kimi
+  upstream_model: kimi-k2.5
+  supports_reasoning: true

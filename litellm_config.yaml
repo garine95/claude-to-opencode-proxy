@@ -1,0 +1,25 @@
+model_list:
+  - model_name: kimi-k2.5
+    litellm_params:
+      model: openai/kimi-k2.5
+      api_key: os.environ/OPENCODE_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: claude-3-5-sonnet-20241022
+    litellm_params:
+      model: openai/kimi-k2.5
+      api_key: os.environ/OPENCODE_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+  - model_name: claude-sonnet-4-20250514
+    litellm_params:
+      model: openai/kimi-k2.5
+      api_key: os.environ/OPENCODE_API_KEY
+      api_base: https://opencode.ai/zen/go/v1
+
+litellm_settings:
+  drop_params: true
+  num_retries: 2
+  request_timeout: 3000
+  callbacks:
+    - litellm_patch.proxy_handler_instance

@@ -1,0 +1,18 @@
+1.安装liteLLM
+
+2.复制 .env.example 为 .env，并填入你的 key
+  OPENCODE_API_KEY="your-opencode-key"
+
+3.bash /Users/jiajia/Desktop/proxy/start.sh
+
+4.配置claude（config.yaml的auto_routing 开启时，会忽略 Claude Code 发来的 model 名，完全由复杂度评分决定路由到哪个模型）
+  "env": {
+    "ANTHROPIC_API_KEY": "sk-anything",
+    "ANTHROPIC_BASE_URL": "http://localhost:4000",
+    "ANTHROPIC_MODEL": "kimi-k2.5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k2.5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k2.5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k2.5",
+    "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  }
